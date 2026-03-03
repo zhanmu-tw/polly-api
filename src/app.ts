@@ -25,7 +25,12 @@ app.get("/health", (_req, res) => {
 });
 
 // Serve frontend static content
-const frontendPath = path.join(__dirname, "../../frontend/dist");
+const frontendPath = path.join(
+  __dirname,
+  process.env.NODE_ENV === "production"
+    ? "../frontend/dist"
+    : "../../frontend/dist",
+);
 app.use(express.static(frontendPath));
 
 app.get(/.*/, (req, res) => {
