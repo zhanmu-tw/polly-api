@@ -6,7 +6,30 @@ import type { PaperTrade } from "../generated/prisma/client";
 
 const router = Router();
 
-// ─── Zod Schemas ───────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+
+function serializeTrade(trade: PaperTrade) {
+  return {
+    ...trade,
+    quantity: Number(trade.quantity),
+    entryPrice: Number(trade.entryPrice),
+    exitPrice: trade.exitPrice != null ? Number(trade.exitPrice) : null,
+    fees: trade.fees != null ? Number(trade.fees) : null,
+    pnl: trade.pnl != null ? Number(trade.pnl) : null,
+    probabilityAtEntry:
+      trade.probabilityAtEntry != null
+        ? Number(trade.probabilityAtEntry)
+        : null,
+    probabilityAtExit:
+      trade.probabilityAtExit != null
+        ? Number(trade.probabilityAtExit)
+        : null,
+  };
+}
+
+const idParamSchema = z.coerce.number().int().positive();
+
+// ─── Zod Schemas ────────────────────────────────────────────────────────────────
 
 const createTradeSchema = z.object({
   marketId: z.string(),
@@ -41,7 +64,7 @@ const portfolioQuerySchema = z.object({
   balance: z.coerce.number().positive().default(1000),
 });
 
-// ─── Routes ────────────────────────────────────────────────────────────────────
+// ─── Routes ─────────────────────────────────────────────────────────────────────
 
 /**
  * POST /trades — Open a new paper trade
@@ -57,11 +80,10 @@ router.post("/", async (req: Request, res: Response) => {
 
   try {
     const trade = await prisma.paperTrade.create({ data: parsed.data });
-    res.status(201).json(trade);
+    res.status(201).json(serializeTrade(trade));
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to create trade", details: String(error) });
+    console.error("Failed to create trade:", error);
+    res.status(500).json({ error: "Failed to create trade" });
   }
 });
 
@@ -69,6 +91,12 @@ router.post("/", async (req: Request, res: Response) => {
  * PATCH /trades/:id/close — Close an open trade
  */
 router.patch("/:id/close", async (req: Request, res: Response) => {
+  const idResult = idParamSchema.safeParse(req.params.id);
+  if (!idResult.success) {
+    res.status(400).json({ error: "Invalid trade ID" });
+    return;
+  }
+
   const parsed = closeTradeSchema.safeParse(req.body);
   if (!parsed.success) {
     res
@@ -78,7 +106,7 @@ router.patch("/:id/close", async (req: Request, res: Response) => {
   }
 
   try {
-    const id = parseInt(req.params.id as string, 10);
+    const id = idResult.data;
 
     const existing = await prisma.paperTrade.findUnique({ where: { id } });
     if (!existing) {
@@ -96,9 +124,9 @@ router.patch("/:id/close", async (req: Request, res: Response) => {
       exitReason,
       fees: inputFees,
     } = parsed.data;
-    const entryPrice = parseFloat(existing.entryPrice.toString());
-    const quantity = parseFloat(existing.quantity.toString());
-    const fees = inputFees ?? parseFloat((existing.fees ?? 0).toString());
+    const entryPrice = Number(existing.entryPrice);
+    const quantity = Number(existing.quantity);
+    const fees = inputFees ?? Number(existing.fees ?? 0);
 
     const direction = existing.direction === "YES" ? 1 : -1;
     const pnl = (exitPrice - entryPrice) * quantity * direction - fees;
@@ -116,11 +144,10 @@ router.patch("/:id/close", async (req: Request, res: Response) => {
       },
     });
 
-    res.json(trade);
+    res.json(serializeTrade(trade));
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to close trade", details: String(error) });
+    console.error("Failed to close trade:", error);
+    res.status(500).json({ error: "Failed to close trade" });
   }
 });
 
@@ -148,11 +175,10 @@ router.get("/", async (req: Request, res: Response) => {
       orderBy: { entryAt: "desc" },
     });
 
-    res.json(trades);
+    res.json(trades.map(serializeTrade));
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to fetch trades", details: String(error) });
+    console.error("Failed to fetch trades:", error);
+    res.status(500).json({ error: "Failed to fetch trades" });
   }
 });
 
@@ -178,29 +204,25 @@ router.get("/portfolio", async (req: Request, res: Response) => {
     ]);
 
     const realizedPnl = closedTrades.reduce(
-      (sum: number, t: PaperTrade) =>
-        sum + (t.pnl ? parseFloat(t.pnl.toString()) : 0),
+      (sum, t) => sum + (t.pnl ? Number(t.pnl) : 0),
       0,
     );
 
     const capitalDeployed = openTrades.reduce(
-      (sum: number, t: PaperTrade) =>
-        sum +
-        parseFloat(t.entryPrice.toString()) * parseFloat(t.quantity.toString()),
+      (sum, t) => sum + Number(t.entryPrice) * Number(t.quantity),
       0,
     );
 
     const cash = startingBalance + realizedPnl - capitalDeployed;
 
-    const positions = openTrades.map((t: PaperTrade) => ({
+    const positions = openTrades.map((t) => ({
       tradeId: t.id,
       marketId: t.marketId,
       marketName: t.marketName,
       direction: t.direction,
-      quantity: t.quantity,
-      entryPrice: t.entryPrice,
-      costBasis:
-        parseFloat(t.entryPrice.toString()) * parseFloat(t.quantity.toString()),
+      quantity: Number(t.quantity),
+      entryPrice: Number(t.entryPrice),
+      costBasis: Number(t.entryPrice) * Number(t.quantity),
     }));
 
     res.json({
@@ -213,9 +235,8 @@ router.get("/portfolio", async (req: Request, res: Response) => {
       positions,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to compute portfolio", details: String(error) });
+    console.error("Failed to compute portfolio:", error);
+    res.status(500).json({ error: "Failed to compute portfolio" });
   }
 });
 
@@ -223,9 +244,15 @@ router.get("/portfolio", async (req: Request, res: Response) => {
  * GET /trades/:id — Get a single trade
  */
 router.get("/:id", async (req: Request, res: Response) => {
+  const idResult = idParamSchema.safeParse(req.params.id);
+  if (!idResult.success) {
+    res.status(400).json({ error: "Invalid trade ID" });
+    return;
+  }
+
   try {
     const trade = await prisma.paperTrade.findUnique({
-      where: { id: parseInt(req.params.id as string, 10) },
+      where: { id: idResult.data },
     });
 
     if (!trade) {
@@ -233,11 +260,10 @@ router.get("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    res.json(trade);
+    res.json(serializeTrade(trade));
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to fetch trade", details: String(error) });
+    console.error("Failed to fetch trade:", error);
+    res.status(500).json({ error: "Failed to fetch trade" });
   }
 });
 

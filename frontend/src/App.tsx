@@ -19,10 +19,20 @@ interface Trade {
   exitPrice?: number;
   pnl?: number;
   status: "OPEN" | "CLOSED";
-  createdAt: string;
+  entryAt: string;
   exitAt?: string;
   strategy?: string;
   slug?: string;
+}
+
+interface Position {
+  tradeId: number;
+  marketId: string;
+  marketName: string | null;
+  direction: string;
+  quantity: number;
+  entryPrice: number;
+  costBasis: number;
 }
 
 interface Portfolio {
@@ -32,7 +42,7 @@ interface Portfolio {
   capitalDeployed: number;
   openPositionCount: number;
   closedTradeCount: number;
-  positions: Trade[];
+  positions: Position[];
 }
 
 export default function App() {
@@ -229,23 +239,23 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Cash"
-              value={`$${Number(portfolio.cash).toFixed(2)}`}
+              value={`$${portfolio.cash.toFixed(2)}`}
               icon={<WalletCards />}
-              trend={Number(portfolio.realizedPnl) >= 0 ? "up" : "down"}
-              subtitle={`Starting: $${Number(portfolio.startingBalance).toFixed(2)}`}
+              trend={portfolio.realizedPnl >= 0 ? "up" : "down"}
+              subtitle={`Starting: $${portfolio.startingBalance.toFixed(2)}`}
             />
             <StatCard
               title="Realized PnL"
-              value={`$${Math.abs(Number(portfolio.realizedPnl)).toFixed(2)}`}
+              value={`$${Math.abs(portfolio.realizedPnl).toFixed(2)}`}
               icon={
-                Number(portfolio.realizedPnl) >= 0 ? <TrendingUp /> : <TrendingDown />
+                portfolio.realizedPnl >= 0 ? <TrendingUp /> : <TrendingDown />
               }
-              trend={Number(portfolio.realizedPnl) >= 0 ? "up" : "down"}
-              valuePrefix={Number(portfolio.realizedPnl) >= 0 ? "+" : "-"}
+              trend={portfolio.realizedPnl >= 0 ? "up" : "down"}
+              valuePrefix={portfolio.realizedPnl >= 0 ? "+" : "-"}
             />
             <StatCard
               title="Capital Deployed"
-              value={`$${Number(portfolio.capitalDeployed).toFixed(2)}`}
+              value={`$${portfolio.capitalDeployed.toFixed(2)}`}
               icon={<Briefcase />}
               subtitle={`${portfolio.openPositionCount} open position${portfolio.openPositionCount !== 1 ? "s" : ""}`}
             />
@@ -321,13 +331,13 @@ export default function App() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right font-mono">
-                        {(Number(trade.entryPrice) * 100).toFixed(1)}¢
+                        {(trade.entryPrice * 100).toFixed(1)}¢
                       </td>
                       <td className="px-6 py-4 text-right font-medium">
-                        {Number(trade.quantity).toLocaleString()}
+                        {trade.quantity.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-slate-300">
-                        ${(Number(trade.entryPrice) * Number(trade.quantity)).toFixed(2)}
+                        ${(trade.entryPrice * trade.quantity).toFixed(2)}
                       </td>
                       <td className="px-6 py-4">
                         {trade.strategy ? (
@@ -339,15 +349,12 @@ export default function App() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right text-slate-500 tabular-nums">
-                        {new Date(trade.createdAt).toLocaleDateString(
-                          undefined,
-                          {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
+                        {new Date(trade.entryAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </td>
                     </tr>
                   ))
@@ -431,21 +438,20 @@ export default function App() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right font-mono">
-                        {trade.exitPrice !== undefined &&
-                        trade.exitPrice !== null
-                          ? `${(Number(trade.exitPrice) * 100).toFixed(1)}¢`
+                        {trade.exitPrice != null
+                          ? `${(trade.exitPrice * 100).toFixed(1)}¢`
                           : "-"}
                       </td>
                       <td className="px-6 py-4 text-right font-medium">
-                        {trade.pnl !== undefined && trade.pnl !== null ? (
+                        {trade.pnl != null ? (
                           <span
                             className={
-                              Number(trade.pnl) >= 0
+                              trade.pnl >= 0
                                 ? "text-emerald-400"
                                 : "text-rose-400"
                             }
                           >
-                            {Number(trade.pnl) >= 0 ? "+" : ""}${Number(trade.pnl).toFixed(2)}
+                            {trade.pnl >= 0 ? "+" : ""}${trade.pnl.toFixed(2)}
                           </span>
                         ) : (
                           <span className="text-slate-500">-</span>
