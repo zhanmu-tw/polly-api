@@ -11,16 +11,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build and Push Docker Image
-        env:
-          DOCKER_CONFIG: /tmp/.docker
+      - name: Install crane
         run: |
-          mkdir -p $DOCKER_CONFIG
-          echo "${{ secrets.REGISTRY_TOKEN }}" | docker --config $DOCKER_CONFIG login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+          curl -sL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz | tar xzf - crane
+          chmod +x crane
+          mv crane /usr/local/bin/
+
+      - name: Build Docker Image
+        run: |
           docker build -t ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest \
                        -t ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:${{ github.sha }} .
-          docker --config $DOCKER_CONFIG push ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest
-          docker --config $DOCKER_CONFIG push ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:${{ github.sha }}
+
+      - name: Push with crane
+        run: |
+          crane auth login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} -p "${{ secrets.REGISTRY_TOKEN }}"
+          crane push $(docker save ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest | crane push - ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest 2>&1 | tail -1) || true
+          docker save ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest > /tmp/image.tar
+          crane push /tmp/image.tar ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest
+          crane tag ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest ${{ github.sha }}
 
       - name: Notify (Success)
         if: success()
