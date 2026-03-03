@@ -35,6 +35,7 @@ model PaperTrade {
   marketName        String?      @map("market_name")
   tokenId           String?      @map("token_id")
   conditionId       String?      @map("condition_id")
+  slug              String?
 
   // Trade details
   strategy          String?

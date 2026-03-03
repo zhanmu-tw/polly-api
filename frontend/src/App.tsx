@@ -22,6 +22,7 @@ interface Trade {
   createdAt: string;
   exitAt?: string;
   strategy?: string;
+  slug?: string;
 }
 
 interface Portfolio {
@@ -40,7 +41,8 @@ export default function App() {
   );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [openTrades, setOpenTrades] = useState<Trade[]>([]);
+  const [closedTrades, setClosedTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -56,13 +58,19 @@ export default function App() {
           "Content-Type": "application/json",
         };
 
-        const [portfolioRes, tradesRes] = await Promise.all([
-          fetch("/api/trades/portfolio", { headers }),
-          fetch("/api/trades?status=OPEN", { headers }),
-        ]);
+        const [portfolioRes, openTradesRes, closedTradesRes] =
+          await Promise.all([
+            fetch("/api/trades/portfolio", { headers }),
+            fetch("/api/trades?status=OPEN", { headers }),
+            fetch("/api/trades?status=CLOSED", { headers }),
+          ]);
 
-        if (!portfolioRes.ok || !tradesRes.ok) {
-          if (portfolioRes.status === 401 || tradesRes.status === 401) {
+        if (!portfolioRes.ok || !openTradesRes.ok || !closedTradesRes.ok) {
+          if (
+            portfolioRes.status === 401 ||
+            openTradesRes.status === 401 ||
+            closedTradesRes.status === 401
+          ) {
             setIsAuthenticated(false);
             localStorage.removeItem("polly_api_key");
             throw new Error("Invalid API Key");
@@ -73,10 +81,12 @@ export default function App() {
         }
 
         const portfolioData = await portfolioRes.json();
-        const tradesData = await tradesRes.json();
+        const openTradesData = await openTradesRes.json();
+        const closedTradesData = await closedTradesRes.json();
 
         setPortfolio(portfolioData);
-        setTrades(tradesData);
+        setOpenTrades(openTradesData);
+        setClosedTrades(closedTradesData);
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -104,7 +114,8 @@ export default function App() {
     setApiKey("");
     setIsAuthenticated(false);
     setPortfolio(null);
-    setTrades([]);
+    setOpenTrades([]);
+    setClosedTrades([]);
   };
 
   if (!isAuthenticated) {
@@ -255,7 +266,7 @@ export default function App() {
               <span>Active Positions</span>
             </h2>
             <span className="text-xs font-medium bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full border border-blue-500/20">
-              {trades.length} Open
+              {openTrades.length} Open
             </span>
           </div>
 
@@ -279,8 +290,8 @@ export default function App() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {trades.length > 0 ? (
-                  trades.map((trade) => (
+                {openTrades.length > 0 ? (
+                  openTrades.map((trade) => (
                     <tr
                       key={trade.id}
                       className="hover:bg-slate-800/30 transition-colors group"
@@ -348,6 +359,130 @@ export default function App() {
                         <WalletCards className="w-10 h-10 text-slate-700" />
                         <span className="text-sm">
                           No open positions currently deployed.
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Closed Trades Table */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl mt-8">
+          <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
+            <h2 className="text-lg font-medium text-slate-50 flex items-center space-x-2">
+              <History className="w-5 h-5 text-slate-400" />
+              <span>Closed Positions</span>
+            </h2>
+            <span className="text-xs font-medium bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
+              {closedTrades.length} Closed
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-400">
+              <thead className="bg-slate-950/50 text-slate-300 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Market</th>
+                  <th className="px-6 py-4 font-medium">Position</th>
+                  <th className="px-6 py-4 font-medium text-right">
+                    Exit Price
+                  </th>
+                  <th className="px-6 py-4 font-medium text-right">
+                    Realized PnL
+                  </th>
+                  <th className="px-6 py-4 font-medium">Strategy</th>
+                  <th className="px-6 py-4 font-medium text-right">
+                    Exit Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {closedTrades.length > 0 ? (
+                  closedTrades.map((trade) => (
+                    <tr
+                      key={trade.id}
+                      className="hover:bg-slate-800/30 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <div
+                          className="font-medium text-slate-200 truncate max-w-xs group-hover:text-blue-400 transition-colors"
+                          title={trade.marketName}
+                        >
+                          {trade.marketName || trade.marketId}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1 font-mono truncate max-w-xs">
+                          {trade.marketId}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold border ${
+                            trade.direction === "YES"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          }`}
+                        >
+                          {trade.direction}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono">
+                        {trade.exitPrice !== undefined &&
+                        trade.exitPrice !== null
+                          ? `${(trade.exitPrice * 100).toFixed(1)}¢`
+                          : "-"}
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium">
+                        {trade.pnl !== undefined && trade.pnl !== null ? (
+                          <span
+                            className={
+                              trade.pnl >= 0
+                                ? "text-emerald-400"
+                                : "text-rose-400"
+                            }
+                          >
+                            {trade.pnl >= 0 ? "+" : ""}${trade.pnl.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {trade.strategy ? (
+                          <span className="inline-flex items-center px-2 py-1 bg-slate-800 text-slate-300 rounded text-xs border border-slate-700">
+                            {trade.strategy}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right text-slate-500 tabular-nums">
+                        {trade.exitAt
+                          ? new Date(trade.exitAt).toLocaleDateString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-slate-500"
+                    >
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <History className="w-10 h-10 text-slate-700" />
+                        <span className="text-sm">
+                          No historical trades recorded yet.
                         </span>
                       </div>
                     </td>

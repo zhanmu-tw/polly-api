@@ -13,6 +13,7 @@ const createTradeSchema = z.object({
   marketName: z.string().optional(),
   tokenId: z.string().optional(),
   conditionId: z.string().optional(),
+  slug: z.string().optional(),
   strategy: z.string().optional(),
   direction: z.enum(["YES", "NO"]),
   quantity: z.number().positive(),
@@ -129,12 +130,10 @@ router.patch("/:id/close", async (req: Request, res: Response) => {
 router.get("/", async (req: Request, res: Response) => {
   const parsed = tradeQuerySchema.safeParse(req.query);
   if (!parsed.success) {
-    res
-      .status(400)
-      .json({
-        error: "Invalid query parameters",
-        details: parsed.error.flatten(),
-      });
+    res.status(400).json({
+      error: "Invalid query parameters",
+      details: parsed.error.flatten(),
+    });
     return;
   }
 
@@ -163,12 +162,10 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/portfolio", async (req: Request, res: Response) => {
   const parsed = portfolioQuerySchema.safeParse(req.query);
   if (!parsed.success) {
-    res
-      .status(400)
-      .json({
-        error: "Invalid query parameters",
-        details: parsed.error.flatten(),
-      });
+    res.status(400).json({
+      error: "Invalid query parameters",
+      details: parsed.error.flatten(),
+    });
     return;
   }
 
