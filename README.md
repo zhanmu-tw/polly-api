@@ -1,5 +1,3 @@
-<![CDATA[<div align="center">
-
 # 🦜 Polly
 
 **Prediction market paper trading, powered by AI agents.**
