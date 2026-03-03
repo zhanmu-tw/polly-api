@@ -39,7 +39,9 @@ export default function App() {
   const [apiKey, setApiKey] = useState(
     () => localStorage.getItem("polly_api_key") || "",
   );
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !!localStorage.getItem("polly_api_key"),
+  );
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [openTrades, setOpenTrades] = useState<Trade[]>([]);
   const [closedTrades, setClosedTrades] = useState<Trade[]>([]);
@@ -227,23 +229,23 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Cash"
-              value={`$${portfolio.cash.toFixed(2)}`}
+              value={`$${Number(portfolio.cash).toFixed(2)}`}
               icon={<WalletCards />}
-              trend={portfolio.realizedPnl >= 0 ? "up" : "down"}
-              subtitle={`Starting: $${portfolio.startingBalance.toFixed(2)}`}
+              trend={Number(portfolio.realizedPnl) >= 0 ? "up" : "down"}
+              subtitle={`Starting: $${Number(portfolio.startingBalance).toFixed(2)}`}
             />
             <StatCard
               title="Realized PnL"
-              value={`$${Math.abs(portfolio.realizedPnl).toFixed(2)}`}
+              value={`$${Math.abs(Number(portfolio.realizedPnl)).toFixed(2)}`}
               icon={
-                portfolio.realizedPnl >= 0 ? <TrendingUp /> : <TrendingDown />
+                Number(portfolio.realizedPnl) >= 0 ? <TrendingUp /> : <TrendingDown />
               }
-              trend={portfolio.realizedPnl >= 0 ? "up" : "down"}
-              valuePrefix={portfolio.realizedPnl >= 0 ? "+" : "-"}
+              trend={Number(portfolio.realizedPnl) >= 0 ? "up" : "down"}
+              valuePrefix={Number(portfolio.realizedPnl) >= 0 ? "+" : "-"}
             />
             <StatCard
               title="Capital Deployed"
-              value={`$${portfolio.capitalDeployed.toFixed(2)}`}
+              value={`$${Number(portfolio.capitalDeployed).toFixed(2)}`}
               icon={<Briefcase />}
               subtitle={`${portfolio.openPositionCount} open position${portfolio.openPositionCount !== 1 ? "s" : ""}`}
             />
@@ -319,13 +321,13 @@ export default function App() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right font-mono">
-                        {(trade.entryPrice * 100).toFixed(1)}¢
+                        {(Number(trade.entryPrice) * 100).toFixed(1)}¢
                       </td>
                       <td className="px-6 py-4 text-right font-medium">
-                        {trade.quantity.toLocaleString()}
+                        {Number(trade.quantity).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-slate-300">
-                        ${(trade.entryPrice * trade.quantity).toFixed(2)}
+                        ${(Number(trade.entryPrice) * Number(trade.quantity)).toFixed(2)}
                       </td>
                       <td className="px-6 py-4">
                         {trade.strategy ? (
@@ -431,19 +433,19 @@ export default function App() {
                       <td className="px-6 py-4 text-right font-mono">
                         {trade.exitPrice !== undefined &&
                         trade.exitPrice !== null
-                          ? `${(trade.exitPrice * 100).toFixed(1)}¢`
+                          ? `${(Number(trade.exitPrice) * 100).toFixed(1)}¢`
                           : "-"}
                       </td>
                       <td className="px-6 py-4 text-right font-medium">
                         {trade.pnl !== undefined && trade.pnl !== null ? (
                           <span
                             className={
-                              trade.pnl >= 0
+                              Number(trade.pnl) >= 0
                                 ? "text-emerald-400"
                                 : "text-rose-400"
                             }
                           >
-                            {trade.pnl >= 0 ? "+" : ""}${trade.pnl.toFixed(2)}
+                            {Number(trade.pnl) >= 0 ? "+" : ""}${Number(trade.pnl).toFixed(2)}
                           </span>
                         ) : (
                           <span className="text-slate-500">-</span>
