@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+}
+
+enum ExitReason {
+  TAKE_PROFIT
+  STOP_LOSS
+  MARKET_RESOLVED
+  SIGNAL
+  MANUAL
+}
+
+model PaperTrade {
+  id                Int          @id @default(autoincrement())
+  status            TradeStatus  @default(OPEN)
+
+  // Polymarket identifiers
+  marketId          String       @map("market_id")
+  marketName        String?      @map("market_name")
+  tokenId           String?      @map("token_id")
+  conditionId       String?      @map("condition_id")
+
+  // Trade details
+  strategy          String?
+  direction         String       // YES or NO
+  quantity          Decimal
+  entryPrice        Decimal      @map("entry_price")
+  exitPrice         Decimal?     @map("exit_price")
+  fees              Decimal?     @default(0)
+  pnl               Decimal?
+
+  // Probability context
+  probabilityAtEntry Decimal?    @map("probability_at_entry")
+  probabilityAtExit  Decimal?    @map("probability_at_exit")
+
+  // Timestamps
+  entryAt           DateTime     @default(now()) @map("entry_at") @db.Timestamptz()
+  exitAt            DateTime?    @map("exit_at") @db.Timestamptz()
+
+  // Closing context
+  exitReason        ExitReason?  @map("exit_reason")
+
+  // Agent reasoning
+  reasoning         String?
+
+  @@map("paper_trades")
+}

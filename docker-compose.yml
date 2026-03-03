@@ -1,0 +1,44 @@
+services:
+  api:
+    container_name: polly-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    #ports:
+    #  - "${API_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-polly}:${POSTGRES_PASSWORD:-polly}@polly-db:5432/${POSTGRES_DB:-polly}?schema=public"
+      PORT: "3000"
+      API_KEY: ${API_KEY:-i1u2e19nu1c029eu1209ecun19ecu1e}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - proxy-network
+      - internal-services
+  db:
+    container_name: polly-db
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-polly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-polly}
+      POSTGRES_DB: ${POSTGRES_DB:-polly}
+    #ports:
+    #  - "${DB_PORT:-5432}:5432"
+    volumes:
+      - /zfs-ssd0/docker/polly/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-polly}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - internal-services
+
+networks:
+  proxy-network:
+    external: true
+  internal-services:
+    external: true
