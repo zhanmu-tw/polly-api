@@ -1,5 +1,5 @@
-# ---- Build Stage ----
-FROM node:22-alpine AS builder
+# ---- Build API Stage ----
+FROM node:22-alpine AS api-builder
 
 WORKDIR /app
 
@@ -15,6 +15,17 @@ RUN npx prisma generate
 COPY src ./src/
 RUN npm run build
 
+# ---- Build Frontend Stage ----
+FROM node:22-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
 # ---- Production Stage ----
 FROM node:22-alpine AS production
 
@@ -23,7 +34,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY --from=builder /app/dist ./dist/
+COPY --from=api-builder /app/dist ./dist/
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist/
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
 COPY entrypoint.sh ./

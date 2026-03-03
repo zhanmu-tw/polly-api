@@ -4,6 +4,7 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import router from "./routes";
 import { apiKeyAuth } from "./middleware/apiKeyAuth";
+import path from "path";
 
 dotenv.config();
 
@@ -21,6 +22,14 @@ app.use("/api", apiKeyAuth, router);
 // Health check
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
+});
+
+// Serve frontend static content
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+app.use(express.static(frontendPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 export default app;
