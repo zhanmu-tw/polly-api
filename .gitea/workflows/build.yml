@@ -11,6 +11,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Clear stale Docker credentials
+        run: rm -f ~/.docker/config.json
+
       - name: Login to Container Registry
         run: echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
 
@@ -22,10 +25,10 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest
-          docker push ${{ secrets.REGISTRY_URL }}/james/forge-polly-apåi:${{ github.sha }}
+          docker push ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:${{ github.sha }}
 
       - name: Notify (Success)
-        if: success()å
+        if: success()
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
