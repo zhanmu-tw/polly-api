@@ -4,7 +4,7 @@ Welcome, Agent. This document contains the instructions and schemas necessary fo
 
 ## Base Configuration
 
-- **Base URL:** `https://polly.internal.uuddlrlrba.uk/api`
+- **Base URL:** `https://domain.com/api`
 - **Authentication:** All requests MUST include an `X-API-Key` header. Two key types exist:
   - **Full access key** (`API_KEY`): Required for all write operations (POST, PATCH). Also works for GET requests.
   - **Read-only key** (`GET_API_KEY`): Only valid for GET endpoints (portfolio, trade listings). Will be rejected on write operations.
@@ -20,19 +20,19 @@ Use this endpoint to record the entry of a new paper trade.
 
 ### Request Body (JSON)
 
-| Field                | Type     | Required | Description                                                                           |
-| -------------------- | -------- | -------- | ------------------------------------------------------------------------------------- |
-| `marketId`           | `string` | **Yes**  | The unique identifier of the prediction market.                                       |
-| `marketName`         | `string` | No       | Human-readable name of the market.                                                    |
+| Field                | Type     | Required | Description                                                                                                                   |
+| -------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `marketId`           | `string` | **Yes**  | The unique identifier of the prediction market.                                                                               |
+| `marketName`         | `string` | No       | Human-readable name of the market.                                                                                            |
 | `slug`               | `string` | **Yes**  | The market's URL slug (e.g. `"will-ai-pass-the-turing-test-by-2030"`). Required for linking back to the market on Polymarket. |
-| `tokenId`            | `string` | No       | Specific token ID for the outcome (if applicable).                                    |
-| `conditionId`        | `string` | No       | Conditional ID for the market (if applicable).                                        |
-| `strategy`           | `string` | No       | The name or ID of the strategy driving this trade.                                    |
-| `direction`          | `enum`   | **Yes**  | Must be exactly `"YES"` or `"NO"`.                                                    |
-| `quantity`           | `number` | **Yes**  | Number of shares bought. Must be > 0.                                                 |
-| `entryPrice`         | `number` | **Yes**  | The price per share. Must be between 0 and 1.                                         |
-| `probabilityAtEntry` | `number` | No       | The implied probability at the time of entry (0 to 1).                                |
-| `reasoning`          | `string` | No       | Your rationale for taking the trade. Use this to log your analytical thought process. |
+| `tokenId`            | `string` | No       | Specific token ID for the outcome (if applicable).                                                                            |
+| `conditionId`        | `string` | No       | Conditional ID for the market (if applicable).                                                                                |
+| `strategy`           | `string` | No       | The name or ID of the strategy driving this trade.                                                                            |
+| `direction`          | `enum`   | **Yes**  | Must be exactly `"YES"` or `"NO"`.                                                                                            |
+| `quantity`           | `number` | **Yes**  | Number of shares bought. Must be > 0.                                                                                         |
+| `entryPrice`         | `number` | **Yes**  | The price per share. Must be between 0 and 1.                                                                                 |
+| `probabilityAtEntry` | `number` | No       | The implied probability at the time of entry (0 to 1).                                                                        |
+| `reasoning`          | `string` | No       | Your rationale for taking the trade. Use this to log your analytical thought process.                                         |
 
 ### Example Request
 
