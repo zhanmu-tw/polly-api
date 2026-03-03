@@ -7,6 +7,7 @@ import {
   Activity,
   Briefcase,
   History,
+  ExternalLink,
 } from "lucide-react";
 
 interface Trade {
@@ -309,12 +310,25 @@ export default function App() {
                       className="hover:bg-slate-800/30 transition-colors group"
                     >
                       <td className="px-6 py-4">
-                        <div
-                          className="font-medium text-slate-200 truncate max-w-xs group-hover:text-blue-400 transition-colors"
-                          title={trade.marketName}
-                        >
-                          {trade.marketName || trade.marketId}
-                        </div>
+                        {trade.slug ? (
+                          <a
+                            href={`https://polymarket.com/event/${trade.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-slate-200 truncate max-w-xs group-hover:text-blue-400 transition-colors flex items-center gap-1.5"
+                            title={trade.marketName}
+                          >
+                            <span className="truncate">{trade.marketName || trade.marketId}</span>
+                            <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </a>
+                        ) : (
+                          <div
+                            className="font-medium text-slate-200 truncate max-w-xs"
+                            title={trade.marketName}
+                          >
+                            {trade.marketName || trade.marketId}
+                          </div>
+                        )}
                         <div className="text-xs text-slate-500 mt-1 font-mono truncate max-w-xs">
                           {trade.marketId}
                         </div>
@@ -416,12 +430,25 @@ export default function App() {
                       className="hover:bg-slate-800/30 transition-colors group"
                     >
                       <td className="px-6 py-4">
-                        <div
-                          className="font-medium text-slate-200 truncate max-w-xs group-hover:text-blue-400 transition-colors"
-                          title={trade.marketName}
-                        >
-                          {trade.marketName || trade.marketId}
-                        </div>
+                        {trade.slug ? (
+                          <a
+                            href={`https://polymarket.com/event/${trade.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-slate-200 truncate max-w-xs group-hover:text-blue-400 transition-colors flex items-center gap-1.5"
+                            title={trade.marketName}
+                          >
+                            <span className="truncate">{trade.marketName || trade.marketId}</span>
+                            <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </a>
+                        ) : (
+                          <div
+                            className="font-medium text-slate-200 truncate max-w-xs"
+                            title={trade.marketName}
+                          >
+                            {trade.marketName || trade.marketId}
+                          </div>
+                        )}
                         <div className="text-xs text-slate-500 mt-1 font-mono truncate max-w-xs">
                           {trade.marketId}
                         </div>

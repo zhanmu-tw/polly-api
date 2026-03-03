@@ -36,7 +36,7 @@ const createTradeSchema = z.object({
   marketName: z.string().optional(),
   tokenId: z.string().optional(),
   conditionId: z.string().optional(),
-  slug: z.string().optional(),
+  slug: z.string(),
   strategy: z.string().optional(),
   direction: z.enum(["YES", "NO"]),
   quantity: z.number().positive(),

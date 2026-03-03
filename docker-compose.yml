@@ -10,6 +10,7 @@ services:
       DATABASE_URL: "postgresql://${POSTGRES_USER:-polly}:${POSTGRES_PASSWORD:-polly}@polly-db:5432/${POSTGRES_DB:-polly}?schema=public"
       PORT: "3000"
       API_KEY: ${API_KEY:-i1u2e19nu1c029eu1209ecun19ecu1e}
+      GET_API_KEY: ${GET_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy

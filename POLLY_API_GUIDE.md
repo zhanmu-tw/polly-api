@@ -5,7 +5,9 @@ Welcome, Agent. This document contains the instructions and schemas necessary fo
 ## Base Configuration
 
 - **Base URL:** `https://polly.internal.uuddlrlrba.uk/api`
-- **Authentication:** All requests MUST include the `X-API-Key: i1u2e19nu1c029eu1209ecun19ecu1e` header.
+- **Authentication:** All requests MUST include an `X-API-Key` header. Two key types exist:
+  - **Full access key** (`API_KEY`): Required for all write operations (POST, PATCH). Also works for GET requests.
+  - **Read-only key** (`GET_API_KEY`): Only valid for GET endpoints (portfolio, trade listings). Will be rejected on write operations.
 - **Content-Type:** All POST and PATCH requests MUST include the `Content-Type: application/json` header.
 
 ---
@@ -22,6 +24,7 @@ Use this endpoint to record the entry of a new paper trade.
 | -------------------- | -------- | -------- | ------------------------------------------------------------------------------------- |
 | `marketId`           | `string` | **Yes**  | The unique identifier of the prediction market.                                       |
 | `marketName`         | `string` | No       | Human-readable name of the market.                                                    |
+| `slug`               | `string` | **Yes**  | The market's URL slug (e.g. `"will-ai-pass-the-turing-test-by-2030"`). Required for linking back to the market on Polymarket. |
 | `tokenId`            | `string` | No       | Specific token ID for the outcome (if applicable).                                    |
 | `conditionId`        | `string` | No       | Conditional ID for the market (if applicable).                                        |
 | `strategy`           | `string` | No       | The name or ID of the strategy driving this trade.                                    |
@@ -37,6 +40,7 @@ Use this endpoint to record the entry of a new paper trade.
 {
   "marketId": "0x123abc...",
   "marketName": "Will AI pass the Turing test by 2030?",
+  "slug": "will-ai-pass-the-turing-test-by-2030",
   "direction": "YES",
   "quantity": 100,
   "entryPrice": 0.45,
