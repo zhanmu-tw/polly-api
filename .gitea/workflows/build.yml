@@ -14,16 +14,11 @@ jobs:
       - name: Clear stale Docker credentials
         run: rm -f ~/.docker/config.json
 
-      - name: Login to Container Registry
-        run: echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
-
-      - name: Build Docker Image
+      - name: Build and Push Docker Image
         run: |
+          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
           docker build -t ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest \
                        -t ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:${{ github.sha }} .
-
-      - name: Push Docker Image
-        run: |
           docker push ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:latest
           docker push ${{ secrets.REGISTRY_URL }}/james/forge-polly-api:${{ github.sha }}
 
