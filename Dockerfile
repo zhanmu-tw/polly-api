@@ -24,6 +24,8 @@ COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
 
 COPY frontend/ ./
+ARG VITE_POLLY_API_KEY
+ENV VITE_POLLY_API_KEY=$VITE_POLLY_API_KEY
 RUN npm run build
 
 # ---- Production Stage ----
