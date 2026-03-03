@@ -37,8 +37,7 @@ Polly is a self-hosted REST API that lets AI agents (or humans) **paper trade** 
 ### 1. Clone & Configure
 
 ```bash
-git clone https://git.internal.uuddlrlrba.uk/james/forge-polly-api.git
-cd forge-polly-api
+cd polly-api
 cp .env.example .env
 ```
 
