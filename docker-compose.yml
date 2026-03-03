@@ -4,8 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        VITE_POLLY_API_KEY: ${API_KEY:-i1u2e19nu1c029eu1209ecun19ecu1e}
     #ports:
     #  - "${API_PORT:-3000}:3000"
     environment:

@@ -34,20 +34,25 @@ interface Portfolio {
   positions: Trade[];
 }
 
-const API_KEY = import.meta.env.VITE_POLLY_API_KEY || "";
-
 export default function App() {
+  const [apiKey, setApiKey] = useState(
+    () => localStorage.getItem("polly_api_key") || "",
+  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!isAuthenticated || !apiKey) return;
+
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError("");
         const headers = {
-          "X-API-Key": API_KEY,
+          "X-API-Key": apiKey,
           "Content-Type": "application/json",
         };
 
@@ -57,6 +62,11 @@ export default function App() {
         ]);
 
         if (!portfolioRes.ok || !tradesRes.ok) {
+          if (portfolioRes.status === 401 || tradesRes.status === 401) {
+            setIsAuthenticated(false);
+            localStorage.removeItem("polly_api_key");
+            throw new Error("Invalid API Key");
+          }
           throw new Error(
             "Failed to fetch data. Check your API key and whether the server is running.",
           );
@@ -79,9 +89,78 @@ export default function App() {
     };
 
     fetchData();
-  }, []);
+  }, [isAuthenticated, apiKey]);
 
-  if (loading) {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (apiKey.trim()) {
+      localStorage.setItem("polly_api_key", apiKey.trim());
+      setIsAuthenticated(true);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("polly_api_key");
+    setApiKey("");
+    setIsAuthenticated(false);
+    setPortfolio(null);
+    setTrades([]);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-200">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-blue-500/10 p-4 rounded-full border border-blue-500/20 mb-4">
+              <Building2 className="w-8 h-8 text-blue-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-50">
+              Polly Authentication
+            </h1>
+            <p className="text-slate-400 text-sm mt-2 text-center">
+              Enter your runtime API key to connect to the Polly agent backend.
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label
+                htmlFor="apiKey"
+                className="block text-sm font-medium text-slate-400 mb-1"
+              >
+                API Key
+              </label>
+              <input
+                id="apiKey"
+                type="password"
+                required
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-colors"
+                placeholder="i1u2e19nu1c029eu1209ecun..."
+              />
+            </div>
+
+            {error && (
+              <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-lg transition-colors flex justify-center items-center"
+            >
+              Connect to Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && !portfolio) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
         <Activity className="w-12 h-12 text-blue-500 animate-spin" />
@@ -118,9 +197,17 @@ export default function App() {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3 text-sm text-slate-400 bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-            <span>System Online</span>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 text-sm text-slate-400 bg-slate-900 px-4 py-2 rounded-lg border border-slate-800">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+              <span>Connected</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-slate-400 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-slate-800"
+            >
+              Logout
+            </button>
           </div>
         </header>
 
